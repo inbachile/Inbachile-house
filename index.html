@@ -1,35 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>INBA Chile 2025</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>INBA Chile 2025 - Venta de Entradas</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <header>
-        <h1>INBA Chile 2025 - Natural House Championships</h1>
-        <p>24 de agosto de 2025 - 10:00 AM<br>
-        Teatro de San Javier, Arturo Prat 2480, San Javier de Loncomilla, Región del Maule</p>
-    </header>
+  <header>
+    <h1>INBA Chile 2025 - Natural House Championships</h1>
+    <p>24 de agosto de 2025 - 10:00 AM<br>
+       Teatro San Javier, Arturo Prat 2480, Región del Maule</p>
+    <img src="afiche-inba-2025.jpg" alt="Afiche del evento" class="afiche"/>
+  </header>
 
-    <section class="teatro">
-        <h2>Distribución de Butacas - Teatro San Javier</h2>
-        <div class="escenario">ESCENARIO</div>
-        <div id="encabezado" class="fila encabezado"></div>
-        <div id="sala" class="contenedor"></div>
-        <div id="seleccionados">Asientos seleccionados: ninguno</div>
-        <button onclick="guardarButacasVendidas()">💾 Guardar y bloquear</button>
-        <button onclick="activarModoAdmin()">🔐 Modo Admin</button>
-        <button onclick="descargarJSON()">⬇️ Descargar JSON</button>
-        <button onclick="enviarReserva()">📩 Enviar reserva por WhatsApp</button>
-    </section>
+  <section class="teatro">
+    <h2>Distribución de Butacas</h2>
+    <img src="plano-teatro-san-javier.png" alt="Plano Teatro" class="plano"/>
+    <div class="escenario">ESCENARIO</div>
+    <div id="encabezado" class="fila encabezado"></div>
+    <div id="sala" class="contenedor"></div>
+    <div id="seleccionados">Asientos seleccionados: ninguno</div>
+    <button class="enviar" onclick="enviarReserva()">Enviar reserva por WhatsApp</button>
+  </section>
 
-    <footer>
-        <p>Contacto: <a href="mailto:chileinba@gmail.com">chileinba@gmail.com</a> |
-        WhatsApp: <a href="https://wa.me/56961451122">+56 9 6145 1122</a></p>
-    </footer>
+  <footer>
+    <p>Contacto: <a href="mailto:chileinba@gmail.com">chileinba@gmail.com</a> | 
+       WhatsApp: <a href="https://wa.me/56961451122">+56 9 6145 1122</a></p>
+  </footer>
 
-    <script src="js/script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

@@ -4,10 +4,12 @@ const sala = document.getElementById("sala");
 const encabezado = document.getElementById("encabezado");
 const seleccionados = new Set();
 const seleccionadosDiv = document.getElementById("seleccionados");
-const ocupados = JSON.parse(localStorage.getItem("butacasVendidas") || "[]");
-let modoAdmin = false;
+const ocupados = new Set();
+const apiUrl = "https://script.google.com/macros/s/AKfycbyr1FV2MyIxr3SNFKADresTCRwMLC9Sq6EtxdF-IRwEe0IPnOi1g8lmWmu2SIINXjQXDg/exec";
 
-// Encabezado de columnas (21 a 1)
+let esAdmin = false;
+
+// Crear encabezado 21 al 1 (de derecha a izquierda)
 for (let i = columnas; i >= 1; i--) {
     const numDiv = document.createElement("div");
     numDiv.className = "letra";
@@ -15,69 +17,74 @@ for (let i = columnas; i >= 1; i--) {
     encabezado.appendChild(numDiv);
 }
 
-// Crear butacas
-filas.forEach(fila => {
-    const filaDiv = document.createElement("div");
-    filaDiv.className = "fila";
-    for (let col = columnas; col >= 1; col--) {
-        const id = fila + col;
-        const seat = document.createElement("div");
-        seat.className = "asiento";
-        seat.textContent = id;
+// Cargar estado desde Google Sheets
+async function cargarButacas() {
+    const res = await fetch(apiUrl);
+    const data = await res.json();
 
-        if (["A", "B", "C"].includes(fila)) seat.classList.add("vip");
+    filas.forEach(fila => {
+        const filaDiv = document.createElement("div");
+        filaDiv.className = "fila";
 
-        if (ocupados.includes(id)) {
-            seat.classList.add("ocupado");
-            seat.onclick = () => {
-                if (modoAdmin && confirm(`¿Desbloquear butaca ${id}?`)) {
-                    const vendidas = JSON.parse(localStorage.getItem("butacasVendidas") || "[]");
-                    const index = vendidas.indexOf(id);
-                    if (index > -1) vendidas.splice(index, 1);
-                    localStorage.setItem("butacasVendidas", JSON.stringify(vendidas));
-                    location.reload();
-                }
-            };
-        } else {
-            seat.onclick = () => {
-                if (seleccionados.has(id)) {
-                    seleccionados.delete(id);
-                    seat.style.backgroundColor = seat.classList.contains("vip") ? "gold" : "green";
-                } else {
-                    seleccionados.add(id);
-                    seat.style.backgroundColor = "orange";
-                }
-                actualizarSeleccion();
-            };
+        for (let col = columnas; col >= 1; col--) {
+            const id = fila + col;
+            const seat = document.createElement("div");
+            seat.className = "asiento";
+            seat.textContent = id;
+
+            if (["A", "B", "C"].includes(fila)) seat.classList.add("vip");
+
+            const estado = data[id];
+
+            if (estado === "vendido") {
+                seat.classList.add("ocupado");
+                ocupados.add(id);
+            } else {
+                seat.onclick = () => {
+                    if (ocupados.has(id)) {
+                        if (!esAdmin) return;
+                        const confirmar = confirm(`¿Desbloquear asiento ${id}?`);
+                        if (!confirmar) return;
+                        actualizarEstado(id, "libre");
+                        seat.classList.remove("ocupado");
+                        seat.style.backgroundColor = seat.classList.contains("vip") ? "gold" : "green";
+                        ocupados.delete(id);
+                        return;
+                    }
+
+                    if (seleccionados.has(id)) {
+                        seleccionados.delete(id);
+                        seat.style.backgroundColor = seat.classList.contains("vip") ? "gold" : "green";
+                    } else {
+                        seleccionados.add(id);
+                        seat.style.backgroundColor = "orange";
+                    }
+
+                    actualizarSeleccion();
+                };
+            }
+
+            filaDiv.appendChild(seat);
         }
-        filaDiv.appendChild(seat);
-    }
-    sala.appendChild(filaDiv);
-});
+
+        sala.appendChild(filaDiv);
+    });
+}
 
 function actualizarSeleccion() {
     const lista = Array.from(seleccionados).sort().join(", ");
-    let total = 0;
-    Array.from(seleccionados).forEach(id => {
-        const isVip = ["A", "B", "C"].includes(id[0]);
-        total += isVip ? 27000 : 17000;
-    });
-    seleccionadosDiv.textContent = lista
-        ? `Asientos seleccionados: ${lista} | Total: $${total.toLocaleString()} CLP`
-        : "Asientos seleccionados: ninguno";
-}
-
-function guardarButacasVendidas() {
-    const clave = prompt("🔐 Ingrese la clave para bloquear butacas:");
-    if (clave !== "cultur1sm0") {
-        alert("❌ Clave incorrecta.");
+    if (!lista) {
+        seleccionadosDiv.textContent = "Asientos seleccionados: ninguno";
         return;
     }
-    const prev = JSON.parse(localStorage.getItem("butacasVendidas") || "[]");
-    const nuevas = Array.from(new Set([...prev, ...Array.from(seleccionados)]));
-    localStorage.setItem("butacasVendidas", JSON.stringify(nuevas));
-    alert("✅ Butacas bloqueadas.");
-    location.reload();
+
+    let total = 0;
+    Array.from(seleccionados).forEach(id => {
+        const fila = id.charAt(0);
+        total += ["A", "B", "C"].includes(fila) ? 27000 : 17000;
+    });
+
+    seleccionadosDiv.textContent = `Asientos seleccionados: ${lista} | Total: $${total.toLocaleString("es-CL")}`;
 }
 
 function enviarReserva() {
@@ -85,32 +92,40 @@ function enviarReserva() {
         alert("Debes seleccionar al menos un asiento.");
         return;
     }
+
     const lista = Array.from(seleccionados).sort().join(", ");
-    const total = Array.from(seleccionados).reduce((sum, id) => {
-        return sum + (["A", "B", "C"].includes(id[0]) ? 27000 : 17000);
-    }, 0);
-    const mensaje = `Hola, quiero reservar los siguientes asientos para INBA Chile 2025: ${lista}. Total: $${total.toLocaleString()} CLP.`;
+    const mensaje = `Hola, quiero reservar los siguientes asientos para INBA Chile 2025: ${lista}. Por favor confirmar.`;
     const url = "https://wa.me/56961451122?text=" + encodeURIComponent(mensaje);
     window.open(url, "_blank");
-}
 
-function activarModoAdmin() {
-    const clave = prompt("🔐 Ingrese la clave de administrador:");
-    if (clave === "cultur1sm0") {
-        modoAdmin = true;
-        alert("✅ Modo administrador activado.");
-    } else {
-        alert("❌ Clave incorrecta.");
+    // Marcar como vendidos si es admin
+    if (esAdmin) {
+        Array.from(seleccionados).forEach(id => {
+            actualizarEstado(id, "vendido");
+        });
+        seleccionados.clear();
+        setTimeout(() => location.reload(), 1000);
     }
 }
 
-function descargarJSON() {
-    const butacas = JSON.parse(localStorage.getItem("butacasVendidas") || "[]");
-    const blob = new Blob([JSON.stringify(butacas, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "butacas.json";
-    a.click();
-    URL.revokeObjectURL(url);
+async function actualizarEstado(id, estado) {
+    await fetch(apiUrl, {
+        method: "POST",
+        body: new URLSearchParams({ asiento: id, estado: estado }),
+    });
 }
+
+function pedirClave() {
+    const clave = prompt("Clave de administrador:");
+    if (clave === "cultur1sm0") {
+        esAdmin = true;
+        alert("Modo administrador activado.");
+    } else {
+        alert("Clave incorrecta.");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    pedirClave();
+    cargarButacas();
+});

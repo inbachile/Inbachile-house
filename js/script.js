@@ -5,17 +5,30 @@ const encabezado = document.getElementById("encabezado");
 const seleccionadosDiv = document.getElementById("seleccionados");
 const seleccionados = new Set();
 
+let ocupados = [];
 let esAdmin = false;
-let ocupados = []; // Aquí se pueden cargar butacas bloqueadas desde backend o archivo
 
-// Ejemplo de butacas ocupadas para demo:
-// ocupados = ["A1", "B5", "C10"];
+const API_URL = "https://script.google.com/macros/s/AKfycbyr1FV2MyIxr3SNFKADresTCRwMLC9Sq6EtxdF-IRwEe0IPnOi1g8lmWmu2SIINXjQXDg/exec";
 
-for (let i = columnas; i >= 1; i--) {
-  const numDiv = document.createElement("div");
-  numDiv.className = "letra";
-  numDiv.textContent = i;
-  encabezado.appendChild(numDiv);
+// Crear encabezado columnas 21 a 1 (de derecha a izquierda)
+function crearEncabezado() {
+  encabezado.innerHTML = "";
+  for (let i = columnas; i >= 1; i--) {
+    const numDiv = document.createElement("div");
+    numDiv.className = "letra";
+    numDiv.textContent = i;
+    encabezado.appendChild(numDiv);
+  }
+}
+
+async function obtenerButacasOcupadas() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    ocupados = data.ocupados || [];
+  } catch (error) {
+    console.error("Error al obtener butacas ocupadas:", error);
+  }
 }
 
 function crearAsientos() {
@@ -70,35 +83,59 @@ function actualizarSeleccion() {
   seleccionadosDiv.textContent = `Asientos seleccionados: ${lista} | Total: $${total.toLocaleString("es-CL")}`;
 }
 
-function enviarReserva() {
+async function enviarReserva() {
   if (seleccionados.size === 0) {
     alert("Debes seleccionar al menos un asiento.");
     return;
   }
-  const lista = Array.from(seleccionados).sort().join(", ");
-  let total = 0;
-  Array.from(seleccionados).forEach(id => {
-    const fila = id.charAt(0);
-    total += ["A", "B", "C"].includes(fila) ? 27000 : 17000;
-  });
 
-  const mensaje = `Hola, quiero reservar los siguientes asientos para el evento INBA Chile 2025: ${lista}. Total a pagar: $${total.toLocaleString("es-CL")}. Por favor confirmar.`;
-  const url = "https://wa.me/56961451122?text=" + encodeURIComponent(mensaje);
-  window.open(url, "_blank");
+  // Preparar datos para enviar a Google Sheets
+  const butacasArray = Array.from(seleccionados);
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        butacas: butacasArray,
+        estado: "vendido"
+      }),
+    });
+    const data = await res.json();
+
+    if (data.result === "ok") {
+      alert("Reserva enviada y butacas bloqueadas correctamente.");
+      // Actualizar localmente butacas ocupadas y refrescar UI
+      ocupados.push(...butacasArray);
+      seleccionados.clear();
+      crearAsientos();
+      actualizarSeleccion();
+    } else {
+      alert("Error al bloquear las butacas, intente nuevamente.");
+    }
+  } catch (error) {
+    console.error("Error al enviar reserva:", error);
+    alert("Error en la conexión, intente nuevamente.");
+  }
 }
 
-function pedirClave() {
+function modoAdmin() {
   const clave = prompt("Ingrese clave de administrador:");
   if (clave === "cultur1sm0") {
     esAdmin = true;
     alert("Modo administrador activado.");
+    // Mostrar aviso, tal vez agregar funciones admin en el futuro
   } else {
-    alert("Clave incorrecta o modo visitante.");
+    alert("Clave incorrecta, modo visitante activado.");
+    esAdmin = false;
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  pedirClave();
+document.addEventListener("DOMContentLoaded", async () => {
+  crearEncabezado();
+  await obtenerButacasOcupadas();
   crearAsientos();
   actualizarSeleccion();
 });

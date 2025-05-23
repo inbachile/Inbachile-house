@@ -1,33 +1,33 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>INBA Chile 2025</title>
-    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <header>
         <h1>INBA Chile 2025 - Natural House Championships</h1>
-        <p>24 de agosto de 2025 - 10:00 AM<br>Teatro de San Javier, Arturo Prat 2480, San Javier de Loncomilla, Región del Maule</p>
-        <img src="img/afiche-inba-2025.jpg" alt="Afiche INBA 2025" class="afiche" />
+        <p>24 de agosto de 2025 - 10:00 AM<br>
+        Teatro de San Javier, Arturo Prat 2480, San Javier de Loncomilla, Región del Maule</p>
     </header>
 
     <section class="teatro">
         <h2>Distribución de Butacas - Teatro San Javier</h2>
-        <img src="img/plano-teatro-san-javier.png" alt="Plano Teatro" class="plano" />
         <div class="escenario">ESCENARIO</div>
         <div id="encabezado" class="fila encabezado"></div>
         <div id="sala" class="contenedor"></div>
         <div id="seleccionados">Asientos seleccionados: ninguno</div>
-        <div id="total">Total: $0 CLP</div>
-        <button class="enviar" onclick="enviarReserva()">Enviar reserva por WhatsApp</button>
-        <button class="guardar" onclick="guardarButacasVendidas()">Guardar y bloquear</button>
+        <button onclick="guardarButacasVendidas()">💾 Guardar y bloquear</button>
+        <button onclick="activarModoAdmin()">🔐 Modo Admin</button>
+        <button onclick="descargarJSON()">⬇️ Descargar JSON</button>
+        <button onclick="enviarReserva()">📩 Enviar reserva por WhatsApp</button>
     </section>
 
     <footer>
-        <p>Contacto: <a href="mailto:chileinba@gmail.com">chileinba@gmail.com</a> | WhatsApp: <a href="https://wa.me/56961451122" target="_blank">+56 9 6145 1122</a></p>
+        <p>Contacto: <a href="mailto:chileinba@gmail.com">chileinba@gmail.com</a> |
+        WhatsApp: <a href="https://wa.me/56961451122">+56 9 6145 1122</a></p>
     </footer>
 
     <script src="js/script.js"></script>
